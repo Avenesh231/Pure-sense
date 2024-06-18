@@ -1,0 +1,158 @@
+#include <LiquidCrystal.h>
+#include <SoftwareSerial.h>
+
+#define rxPin 1
+#define txPin 0
+
+char message[20];
+int sensorValues[4];
+int sensorMax[4] = {0};
+int sensorMin[4] = {1023};
+int sensorAverage[4] = {500, 500, 400, 500}; // Adjust these values based on your system or calibrate sensor values.
+
+LiquidCrystal lcd(13, 11, 5, 4, 3, 2);
+SoftwareSerial blueTooth(rxPin, txPin);
+
+void setup() {
+    Serial.begin(9600);
+    lcd.begin(16, 2);
+    blueTooth.begin(9600);
+    pinMode(A0, INPUT);
+    pinMode(A3, INPUT);
+    pinMode(A2, INPUT);
+    pinMode(A1, INPUT);
+
+    // sensorCalibrate(); // If you need to calibrate sensor values
+}
+
+void displayMessage() {
+    if (sensorValues[0] == 0 && sensorValues[1] == 0 && sensorValues[2] == 0 && sensorValues[3] == 0) {
+        strcpy(message, "HELP");
+    } else if (sensorValues[0] == 0 && sensorValues[1] == 0 && sensorValues[2] == 0 && sensorValues[3] == 1) {
+        strcpy(message, "HAPPY");
+    } else if (sensorValues[0] == 0 && sensorValues[1] == 0 && sensorValues[2] == 1 && sensorValues[3] == 0) {
+        strcpy(message, "NICE");
+    } else if (sensorValues[0] == 0 && sensorValues[1] == 0 && sensorValues[2] == 1 && sensorValues[3] == 1) {
+        strcpy(message, "VICTORY");
+    } else if (sensorValues[0] == 0 && sensorValues[1] == 1 && sensorValues[2] == 0 && sensorValues[3] == 0) {
+        strcpy(message, "PROPOSE");
+    } else if (sensorValues[0] == 0 && sensorValues[1] == 1 && sensorValues[2] == 0 && sensorValues[3] == 1) {
+        strcpy(message, "MOVIE");
+    } else if (sensorValues[0] == 0 && sensorValues[1] == 1 && sensorValues[2] == 1 && sensorValues[3] == 0) {
+        strcpy(message, "WORSHIP");
+    } else if (sensorValues[0] == 0 && sensorValues[1] == 1 && sensorValues[2] == 1 && sensorValues[3] == 1) {
+        strcpy(message, "DANGER");
+    } else if (sensorValues[0] == 1 && sensorValues[1] == 0 && sensorValues[2] == 0 && sensorValues[3] == 0) {
+        strcpy(message, "WORST");
+    } else if (sensorValues[0] == 1 && sensorValues[1] == 0 && sensorValues[2] == 0 && sensorValues[3] == 1) {
+        strcpy(message, "INTERESTING");
+    } else if (sensorValues[0] == 1 && sensorValues[1] == 0 && sensorValues[2] == 1 && sensorValues[3] == 0) {
+        strcpy(message, "PARTY");
+    } else if (sensorValues[0] == 1 && sensorValues[1] == 0 && sensorValues[2] == 1 && sensorValues[3] == 1) {
+        strcpy(message, "HUNGRY");
+    } else if (sensorValues[0] == 1 && sensorValues[1] == 1 && sensorValues[2] == 0 && sensorValues[3] == 0) {
+        strcpy(message, "FUN");
+    } else if (sensorValues[0] == 1 && sensorValues[1] == 1 && sensorValues[2] == 0 && sensorValues[3] == 1) {
+        strcpy(message, "MUSIC");
+    } else if (sensorValues[0] == 1 && sensorValues[1] == 1 && sensorValues[2] == 1 && sensorValues[3] == 0) {
+        strcpy(message, "MEDICINE");
+    } else {
+        strcpy(message, "BREAK");
+    }
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.write(message);
+
+    if (Serial.available()) {
+        blueTooth.write(message);
+    }
+    Serial.println(message);
+
+    delay(1000);
+}
+
+void readSensors() {
+    sensorValues[0] = analogRead(A0);
+    sensorValues[1] = analogRead(A1);
+    sensorValues[2] = analogRead(A2);
+    sensorValues[3] = analogRead(A3);
+}
+
+void assignValues() {
+    if (sensorValues[0] > sensorAverage[0]) {
+        sensorValues[0] = 0;
+    } else {
+        sensorValues[0] = 1;
+    }
+
+    if (sensorValues[1] > sensorAverage[1]) {
+        sensorValues[1] = 0;
+    } else {
+        sensorValues[1] = 1;
+    }
+
+    if (sensorValues[2] > sensorAverage[2]) {
+        sensorValues[2] = 0;
+    } else {
+        sensorValues[2] = 1;
+    }
+
+    if (sensorValues[3] > sensorAverage[3]) {
+        sensorValues[3] = 0;
+    } else {
+        sensorValues[3] = 1;
+    }
+}
+
+void sensorCalibrate() {
+    Serial.println("Calibrating...");
+    for (int i = 0; i < 1000; i++) {
+        readSensors();
+        if (sensorValues[0] > sensorMax[0]) {
+            sensorMax[0] = sensorValues[0];
+        }
+        if (sensorValues[0] < sensorMin[0]) {
+            sensorMin[0] = sensorValues[0];
+        }
+
+        if (sensorValues[1] > sensorMax[1]) {
+            sensorMax[1] = sensorValues[1];
+        }
+        if (sensorValues[1] < sensorMin[1]) {
+            sensorMin[1] = sensorValues[1];
+        }
+
+        if (sensorValues[2] > sensorMax[2]) {
+            sensorMax[2] = sensorValues[2];
+        }
+        if (sensorValues[2] < sensorMin[2]) {
+            sensorMin[2] = sensorValues[2];
+        }
+
+        if (sensorValues[3] > sensorMax[3]) {
+            sensorMax[3] = sensorValues[3];
+        }
+        if (sensorValues[3] < sensorMin[3]) {
+            sensorMin[3] = sensorValues[3];
+        }
+
+        delay(5);
+    }
+
+    sensorAverage[0] = (sensorMax[0] + sensorMin[0]) / 2;
+    sensorAverage[1] = (sensorMax[1] + sensorMin[1]) / 2;
+    sensorAverage[2] = (sensorMax[2] + sensorMin[2]) / 2;
+    sensorAverage[3] = (sensorMax[3] + sensorMin[3]) / 2;
+
+    Serial.println(sensorAverage[0]);
+    Serial.println(sensorAverage[1]);
+    Serial.println(sensorAverage[2]);
+    Serial.println(sensorAverage[3]);
+}
+
+void loop() {
+    readSensors();
+    assignValues();
+    displayMessage();
+}
